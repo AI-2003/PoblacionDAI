@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #Leemos los archivos iniciales
 filesPath="C:\\Users\\carlo\\OneDrive\\Documentos\\Escuela\\DAI\\ProyectoFinalDai\\"
@@ -11,16 +12,19 @@ datos = pd.merge(causes, population, how="inner", on=["Entity", "Code", "Year"])
 
 
 #1) Tablas con porcentaje de personas fallecidas por cada enfermedad
+print("\n----------     1     -----------\n")
 #Copiamos la tabla de las causas
 percentage = causes.copy()
 #Dividimos la cantidad de muertes entre las muertes totales y multpilicamos por cien para calcular el porcentaje
-percentage.iloc[:, 3:] = percentage.iloc[:,3:].div(causes.sum(axis=1), axis="index")*100
-
+percentage.iloc[:, 3:] = percentage.iloc[:,3:].div(causes.sum(axis=1, numeric_only=True), axis="index")*100
+print("Tabla de porcentajes: \n", percentage)
+print(" ")
 
 
 
 
 #2) Crecimiento poblacional
+print("\n----------     2     -----------\n")
 countryList = [
     "China",
     "United States",
@@ -50,6 +54,7 @@ plt.close()
 
 
 #3) Porcentaje de enfermedad vs tiempo
+print("\n----------     3     -----------\n")
 colsList = [
     "Diabetes Mellitus",
     "Nutritional Deficiencies",
@@ -58,20 +63,28 @@ colsList = [
     "Drug Use Disorders",
     "Neoplasms"
 ]
+#Iteramos sobre cada enfermedad asignada
+for dis in colsList:
+    #Creamos un Dataframe para guardar la info y graficat
+    df = pd.DataFrame(index=pd.unique(percentage["Year"]))
+    #Analizaremos esta enfermedad sobre cada país requerido
+    for entity in countryList:
+        #Obtenemos los valores de la enfemedad que queremos del DataFrame en que están guarados todos los porcentajes
+        df[entity] = percentage[percentage["Entity"]==entity].loc[:,dis].values
+    #Graficamos
+    #El contador i nos sirve para saber en qué renglón y columna poner la subgráfica
+    ax = df.plot(title="Porcentaje de muertes por: "+dis)
+    #Cerramos gráfica
+    plt.show()
+    plt.close()
 #Creamos dataframes en los que guardaremos los valores máximos por cada país
 maxes = pd.DataFrame(index=colsList)
 mins = pd.DataFrame(index=colsList)
 proms = pd.DataFrame(index=colsList)
-#Iteramos sobre cada país asignado
+#Iteramos sobre país
 for entity in countryList:
-    #Obtenemos un subconjunto del dataframe obtenido en 1)
     #Obtenemos el dataframe de las enfermedades asignadas para este país
     df = percentage[percentage["Entity"]==entity].loc[:,colsList+["Year"]]
-    #Graficamos
-    df.plot(x="Year",title="Porcentaje de muertes por enfermedad en: "+entity)
-    #Cerramos gráfica
-    plt.show()
-    plt.close()
     #Obtenemos los valores del país
     maxes[entity] = df.max().iloc[:-1].values
     mins[entity] = df.min().iloc[:-1].values
@@ -89,6 +102,7 @@ print(" ")
 
 
 #4)
+print("\n----------     4     -----------\n")
 #Creamos un nuevo dataframe, guardamos datos de poblacion y solo los valores de entidad, código y año de tabla de causas
 #Hacemos este inner join para evitar tener datos incompletos que afecten el resultado
 populDeaths = pd.merge(population, causes.iloc[:,[0,1,2]], how="inner", on=["Entity", "Code", "Year"])
@@ -104,6 +118,9 @@ for entity in countryList:
     deathPercentages[entity] = populDeaths[populDeaths["Entity"]==entity]["Death Percentage"].values
 #Graficamos la colección de todos los países
 deathPercentages.plot(title="Porcentaje de personas fallecidas")
+#Cerramos gráfica
+plt.show()
+plt.close()
 #Obtenemos posición de valores
 idMax=populDeaths["Death Percentage"].idxmax()
 idMin=populDeaths["Death Percentage"].idxmin()
@@ -115,6 +132,7 @@ print("País con menor porcentaje de muertes: ", populDeaths.iloc[idMin,0])
 
 
 #5)
+print("\n----------     5     -----------\n")
 import matplotlib.pyplot as plt
 colsList2 = [
     "Diabetes Mellitus",
@@ -158,6 +176,7 @@ plt.close()
 
 
 #6)
+print("\n----------     6     -----------\n")
 #Colores para la gráfica
 colors = ['yellowgreen','red','lightskyblue','lightcoral','blue', 'darkgreen','yellow','grey','violet','magenta','cyan']
 #Iteramos sobre la lista de países
@@ -177,8 +196,8 @@ for entity in countryList:
     #Enseñamos las etiquetas
     fig.legend(patches, labels, bbox_to_anchor=(-0.1, 1.),fontsize=8)
     #Obtenemos el nombre (id) de la enfermedad con máximo y mínimo porcentaje
-    print("Enfermedad con mayor porcentaje de muertes en"+entity+": ", df.idxmax())
-    print("Enfermedad con menor porcentaje de muertes en"+entity+": ", df.idxmin())
+    print("Enfermedad con mayor porcentaje de muertes en "+entity+": ", df.idxmax())
+    print("Enfermedad con menor porcentaje de muertes en "+entity+": ", df.idxmin())
     print(" ")
     #Cerramos gráfica
     plt.show()
