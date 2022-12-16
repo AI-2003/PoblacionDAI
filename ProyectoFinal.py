@@ -114,7 +114,6 @@ deathPercentages=pd.DataFrame(index=pd.unique(populDeaths["Year"]))
 for entity, df in populDeaths.groupby("Entity"):
     #Obtenemos los valores del porcentaje de muertes y lo guardamos en una columna del data frame previamente definido
     deathPercentages[entity]=df["Death Percentage"].values
-    print(df)
 #Graficamos la colección de todos los países
 deathPercentages.plot(title="Porcentaje de personas fallecidas")
 #Cerramos gráfica
