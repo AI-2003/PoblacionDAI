@@ -7,7 +7,7 @@ filesPath="C:\\Users\\carlo\\OneDrive\\Documentos\\Escuela\\DAI\\ProyectoFinalDa
 causes = pd.read_csv(filesPath+"cause_of_deaths.csv", encoding="utf-8").rename({"Country/Territory": "Entity"}, axis=1)
 population = pd.read_csv(filesPath+"population.csv", encoding="utf-8")
 ```
-
+## PROBLEMA 1
 
 ```python
 print("\n----------     1     -----------\n")
@@ -132,7 +132,7 @@ print(" ")
     [6120 rows x 34 columns]
      
     
-
+## PROBLEMA 2
 
 ```python
 print("\n----------     2     -----------\n")
@@ -177,7 +177,7 @@ plt.close()
 ![png](README_files/README_2_1.png)
     
 
-
+## PROBLEMA 3
 
 ```python
 print("\n----------     3     -----------\n")
@@ -297,7 +297,7 @@ print(" ")
     dtype: float64
      
     
-
+## PROBLEMA 4
 
 ```python
 print("\n----------     4     -----------\n")
@@ -350,7 +350,7 @@ print("País con menor porcentaje de muertes: ", populDeaths.iloc[idMin,0])
     País con mayor porcentaje de muertes:  Niue
     País con menor porcentaje de muertes:  North Korea
     
-
+## PROBLEMA 5
 
 ```python
 print("\n----------     5     -----------\n")
@@ -412,7 +412,7 @@ plt.close()
 ![png](README_files/README_5_1.png)
     
 
-
+## PROBLEMA 6
 
 ```python
 print("\n----------     6     -----------\n")
