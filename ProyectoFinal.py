@@ -6,10 +6,6 @@ filesPath="C:\\Users\\carlo\\OneDrive\\Documentos\\Escuela\\DAI\\ProyectoFinalDa
 causes = pd.read_csv(filesPath+"cause_of_deaths.csv", encoding="utf-8").rename({"Country/Territory": "Entity"}, axis=1)
 population = pd.read_csv(filesPath+"population.csv", encoding="utf-8")
 
-#Creamos un DataFrame con todos los datos
-#Nos ayuda hacer un inner merge para evitar casos con datos faltantes
-datos = pd.merge(causes, population, how="inner", on=["Entity", "Code", "Year"])
-
 
 #1) Tablas con porcentaje de personas fallecidas por cada enfermedad
 print("\n----------     1     -----------\n")
