@@ -3,9 +3,36 @@ import matplotlib.pyplot as plt
 
 #Leemos los archivos iniciales
 filesPath="C:\\Users\\carlo\\OneDrive\\Documentos\\Escuela\\DAI\\ProyectoFinalDai\\"
-causes = pd.read_csv(filesPath+"cause_of_deaths.csv", encoding="utf-8").rename({"Country/Territory": "Entity"}, axis=1)
-population = pd.read_csv(filesPath+"population.csv", encoding="utf-8")
-
+causesRaw = pd.read_csv(filesPath+"cause_of_deaths.csv", encoding="utf-8").rename({"Country/Territory": "Entity"}, axis=1).sort_values(by=["Entity", "Year"])
+populationRaw = pd.read_csv(filesPath+"population.csv", encoding="utf-8").sort_values(by=["Entity", "Year"])
+countryList = [
+    "China",
+    "United States",
+    "Mexico",
+    "Angola",
+    "Argentina",
+    "Pakistan",
+    "Australia",
+    "South Korea",
+    "Slovakia",
+    "France"
+]
+colsList = [
+    "Diabetes Mellitus",
+    "Nutritional Deficiencies",
+    "Cardiovascular Diseases",
+    "Protein-Energy Malnutrition",
+    "Drug Use Disorders",
+    "Neoplasms"
+]
+# Delimitamos las tablas según los países y enfermedades asignadas
+population=pd.DataFrame()
+for entity in countryList:
+    population = pd.concat([population, populationRaw[populationRaw["Entity"]==entity]])
+causes=pd.DataFrame()
+ids=["Entity", "Code", "Year"]
+for entity in countryList:
+    causes = pd.concat([causes, causesRaw[causesRaw["Entity"]==entity].loc[:,ids+colsList]])
 
 #1) Tablas con porcentaje de personas fallecidas por cada enfermedad
 print("\n----------     1     -----------\n")
@@ -21,23 +48,11 @@ print(" ")
 
 #2) Crecimiento poblacional
 print("\n----------     2     -----------\n")
-countryList = [
-    "China",
-    "United States",
-    "Mexico",
-    "Angola",
-    "Argentina",
-    "Pakistan",
-    "Australia",
-    "South Korea",
-    "Slovakia",
-    "France"
-]
 # Creamos un DataFrame con los años, sin repeticiones, como columnas
 growth = pd.DataFrame(index=pd.unique(population["Year"]))
-# Agrupamos y calculamos el crecimiento en cada país
-for entity in countryList:
-    growth[entity] = population[population["Entity"]==entity]["Population (historical estimates)"].values
+# Obtenemos la población por cada país
+for entity, df in population.groupby("Entity"):
+    growth[entity] = df["Population (historical estimates)"].values
 #Calculamos los porcentajes de crecimiento en las columnas de los países
 growth=growth.pct_change()*100
 #Graficamos
@@ -51,46 +66,33 @@ plt.close()
 
 #3) Porcentaje de enfermedad vs tiempo
 print("\n----------     3     -----------\n")
-colsList = [
-    "Diabetes Mellitus",
-    "Nutritional Deficiencies",
-    "Cardiovascular Diseases",
-    "Protein-Energy Malnutrition",
-    "Drug Use Disorders",
-    "Neoplasms"
-]
 #Iteramos sobre cada enfermedad asignada
 for dis in colsList:
     #Creamos un Dataframe para guardar la info y graficat
-    df = pd.DataFrame(index=pd.unique(percentage["Year"]))
+    dfDis = pd.DataFrame(index=pd.unique(percentage["Year"]))
     #Analizaremos esta enfermedad sobre cada país requerido
-    for entity in countryList:
-        #Obtenemos los valores de la enfemedad que queremos del DataFrame en que están guarados todos los porcentajes
-        df[entity] = percentage[percentage["Entity"]==entity].loc[:,dis].values
+    for entity, df in percentage.groupby("Entity"):
+        #Obtenemos los valores de la enfemedad que queremos
+        dfDis[entity] = df.loc[:, dis].values
     #Graficamos
     #El contador i nos sirve para saber en qué renglón y columna poner la subgráfica
-    ax = df.plot(title="Porcentaje de muertes por: "+dis)
+    ax = dfDis.plot(title="Porcentaje de muertes por: "+dis)
     #Cerramos gráfica
     plt.show()
     plt.close()
-#Creamos dataframes en los que guardaremos los valores máximos por cada país
-maxes = pd.DataFrame(index=colsList)
-mins = pd.DataFrame(index=colsList)
-proms = pd.DataFrame(index=colsList)
-#Iteramos sobre país
-for entity in countryList:
-    #Obtenemos el dataframe de las enfermedades asignadas para este país
-    df = percentage[percentage["Entity"]==entity].loc[:,colsList+["Year"]]
-    #Obtenemos los valores del país
-    maxes[entity] = df.max().iloc[:-1].values
-    mins[entity] = df.min().iloc[:-1].values
-    proms[entity] = df.mean().iloc[:-1].values
 #Obtenemos los valores de todos los países
-print("País con porcentajes máximos: \n", maxes.idxmax(axis=1))
+#Encontramos el máximo para cada enfermedad y su id
+maxes = percentage.idxmax(numeric_only=True)[1:]
+#Actualizamos, le damos a max como valores el nombre de los países y como índice el nombre de la enfermedad
+maxes.update(pd.Series(percentage.loc[maxes, 'Entity'].values, index=maxes.index))
+mins = percentage.idxmax(numeric_only=True)[1:]
+mins.update(pd.Series(percentage.loc[percentage.idxmin(numeric_only=True)[1:], 'Entity'].values, index=mins.index))
+print("País con porcentajes máximos: \n", maxes)
 print(" ")
-print("País con porcentajes mínimos: \n", mins.idxmin(axis=1))
+print("País con porcentajes mínimos: \n", mins)
 print(" ")
-print("Promedios: \n", proms.mean(axis=1))
+#Calculamos el promedio de las columnas de las enfermedades
+print("Promedios: \n", percentage.iloc[:,3:].mean())
 print(" ")
 
 
@@ -103,15 +105,16 @@ print("\n----------     4     -----------\n")
 #Hacemos este inner join para evitar tener datos incompletos que afecten el resultado
 populDeaths = pd.merge(population, causes.iloc[:,[0,1,2]], how="inner", on=["Entity", "Code", "Year"])
 #Obtenemos la suma de la cantidad de muertes por año por país
-populDeaths["Total Deaths"] = causes.iloc[:,3:].sum(axis=1, skipna=True)
+populDeaths["Total Deaths"] = causes.iloc[:,3:].sum(axis=1).values
 #Calculamos el porcentaje de estas muertes respecto al estimado de población
 populDeaths["Death Percentage"] = populDeaths["Total Deaths"]/populDeaths["Population (historical estimates)"]*100
 #Creamos un data frame para graficar con el año como índice
 deathPercentages=pd.DataFrame(index=pd.unique(populDeaths["Year"]))
 #Iteramos sobre cada país asignado
-for entity in countryList:
+for entity, df in populDeaths.groupby("Entity"):
     #Obtenemos los valores del porcentaje de muertes y lo guardamos en una columna del data frame previamente definido
-    deathPercentages[entity] = populDeaths[populDeaths["Entity"]==entity]["Death Percentage"].values
+    deathPercentages[entity]=df["Death Percentage"].values
+    print(df)
 #Graficamos la colección de todos los países
 deathPercentages.plot(title="Porcentaje de personas fallecidas")
 #Cerramos gráfica
@@ -129,14 +132,13 @@ print("País con menor porcentaje de muertes: ", populDeaths.iloc[idMin,0])
 
 #5)
 print("\n----------     5     -----------\n")
-import matplotlib.pyplot as plt
 colsList2 = [
     "Diabetes Mellitus",
     "Cardiovascular Diseases",
     "Nutritional Deficiencies",
     "Protein-Energy Malnutrition"
 ]
-#Con matplotlib creamos una figura de 2 rengolnes y 2 columnas para subgráficas
+# Con matplotlib creamos una figura de 2 rengolnes y 2 columnas para subgráficas
 #Además, especificamos el ratio de las colmnas y filas
 fig, axes = plt.subplots(nrows=3, ncols=3,  width_ratios=[2,2,1], height_ratios=[1,20,20])
 #Añadimos espacio entre las subgráficas
@@ -146,14 +148,13 @@ fig.suptitle("Porcentaje de muertes por enfermedad")
 i=2
 for dis in colsList2:
     #Creamos un Dataframe para guardar la info y graficat
-    df = pd.DataFrame(index=pd.unique(percentage["Year"]))
+    dfDis = pd.DataFrame(index=pd.unique(percentage["Year"]))
     #Analizaremos esta enfermedad sobre cada país requerido
-    for entity in countryList:
-        #Obtenemos los valores de la enfemedad que queremos del DataFrame en que están guarados todos los porcentajes
-        df[entity] = percentage[percentage["Entity"]==entity].loc[:,dis].values
+    for entity, df in percentage.groupby("Entity"):
+        dfDis[entity]=df.loc[:,dis].values
     #Graficamos
     #El contador i nos sirve para saber en qué renglón y columna poner la subgráfica
-    ax = df.plot(title=dis, ax=axes[i//2,(i+2)%2], legend=False)
+    ax = dfDis.plot(title=dis, ax=axes[i//2,(i+2)%2], legend=False)
     i+=1
 #Guardamos las etiquetas en una variable
 han, lab = ax.get_legend_handles_labels()
