@@ -41,7 +41,10 @@ for entity in countryList:
 #Calculamos los porcentajes de crecimiento en las columnas de los países
 growth=growth.pct_change()*100
 #Graficamos
-growth.plot()
+growth.plot(title="Porcentaje de crecimiento por país")
+#Cerramos gráfica
+plt.show()
+plt.close()
 
 
 
@@ -65,7 +68,10 @@ for entity in countryList:
     #Obtenemos el dataframe de las enfermedades asignadas para este país
     df = percentage[percentage["Entity"]==entity].loc[:,colsList+["Year"]]
     #Graficamos
-    df.plot(x="Year",title=entity)
+    df.plot(x="Year",title="Porcentaje de muertes por enfermedad en: "+entity)
+    #Cerramos gráfica
+    plt.show()
+    plt.close()
     #Obtenemos los valores del país
     maxes[entity] = df.max().iloc[:-1].values
     mins[entity] = df.min().iloc[:-1].values
@@ -76,6 +82,8 @@ print(" ")
 print("País con porcentajes mínimos: \n", mins.idxmin(axis=1))
 print(" ")
 print("Promedios: \n", proms.mean(axis=1))
+print(" ")
+
 
 
 
@@ -115,12 +123,13 @@ colsList2 = [
     "Protein-Energy Malnutrition"
 ]
 #Con matplotlib creamos una figura de 2 rengolnes y 2 columnas para subgráficas
-#Además, especificamos el ratio de las colmnas
-fig, axes = plt.subplots(nrows=2, ncols=3,  width_ratios=[2,2,1])
+#Además, especificamos el ratio de las colmnas y filas
+fig, axes = plt.subplots(nrows=3, ncols=3,  width_ratios=[2,2,1], height_ratios=[1,20,20])
 #Añadimos espacio entre las subgráficas
 fig.tight_layout(pad=2)
+fig.suptitle("Porcentaje de muertes por enfermedad")
 #Iteramos sobre cada enfermedad sobre la que queremos graficar
-i=0
+i=2
 for dis in colsList2:
     #Creamos un Dataframe para guardar la info y graficat
     df = pd.DataFrame(index=pd.unique(percentage["Year"]))
@@ -134,12 +143,17 @@ for dis in colsList2:
     i+=1
 #Guardamos las etiquetas en una variable
 han, lab = ax.get_legend_handles_labels()
-#Ocultamos las gráficas de la última columna
+#Ocultamos las gráficas de la última columna y de la primera fila
+axes[0,0].set_visible(False)
+axes[0,1].set_visible(False)
 axes[0,2].set_visible(False)
 axes[1,2].set_visible(False)
+axes[2,2].set_visible(False)
 #Ponemos en su lugar una leyenda
 fig.legend(han, lab, loc="center right")
-
+#Cerramos gráfica
+plt.show()
+plt.close()
 
 
 
@@ -166,3 +180,6 @@ for entity in countryList:
     print("Enfermedad con mayor porcentaje de muertes en"+entity+": ", df.idxmax())
     print("Enfermedad con menor porcentaje de muertes en"+entity+": ", df.idxmin())
     print(" ")
+    #Cerramos gráfica
+    plt.show()
+    plt.close()
